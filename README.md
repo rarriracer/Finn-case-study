@@ -10,6 +10,13 @@ Python berechnet Kennzahlen, Rundung und Grenzabstände. Die KI liest Vertragskl
 
 ## Lokaler Schnellstart
 
+Zuerst das Repo klonen und in den Projektordner wechseln.
+
+```sh
+git clone https://github.com/rarriracer/Finn-case-study.git
+cd Finn-case-study
+```
+
 Für die Demo mit dem geprüften Vertragsbestand genügen Python 3.12 und die Projektpakete. Der Lauf funktioniert ohne Outlook-Konto oder KI-Key.
 
 ```sh
@@ -151,7 +158,7 @@ Für die Aufnahme eines zusätzlichen Covenants liegt der synthetische Musterver
 
 Die lokale `.env` benötigt `FINN_API_URL`, `FINN_API_MODEL` und `FINN_API_KEY`. Für KI:connect ist der Endpunkt `https://chat.kiconnect.nrw/api/v1/chat/completions`. Modellnamen und Schlüssel in der lokalen Datei pflegen.
 
-1. Finn im Projektordner mit `.venv/bin/python mail_finn.py --testbestand` starten. Der separate DuckDB-Bestand liegt unter `output/mail-test/`. Bei der ersten Verwendung ist er leer.
+1. Finn im Projektordner mit `.venv/bin/python mail_finn.py --testbestand --graph` starten. Der separate DuckDB-Bestand liegt unter `output/mail-test/`. Bei der ersten Verwendung ist er leer.
 2. Von einer freigegebenen Adresse vier einzelne Mails mit dem Betreff **Vertrag prüfen** senden. Pro Mail eines der vier unveränderten Original-PDFs anhängen.
 3. Die vier KI-Entwürfe mit den PDFs abgleichen und über **Vertrag bestätigen <Kennung>** von derselben Adresse bestätigen. Finn aktiviert ein bekanntes Original nur, wenn Dateihash, Anzahl, Grenzwerte und Vergleichsrichtungen zu den geprüften Rechenregeln passen. Abweichende PDFs werden als Entwürfe zur fachlichen Prüfung gespeichert.
 4. **Covenant-Übersicht** senden und vier Verträge sowie vier aktive Covenants kontrollieren.
