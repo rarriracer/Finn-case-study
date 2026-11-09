@@ -1,0 +1,7 @@
+.venv/
+.env
+/mail-regeln.txt
+/FINN-SPICKZETTEL.md
+__pycache__/
+output/
+.DS_Store

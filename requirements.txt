@@ -1,0 +1,5 @@
+duckdb==1.4.4
+pypdf==6.21.4
+openpyxl==3.1.5
+defusedxml==0.7.1
+reportlab==4.4.10

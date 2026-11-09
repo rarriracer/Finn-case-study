@@ -1,0 +1,7 @@
+# Als mail-regeln.txt im Finn-Ordner speichern.
+# Freigegebene Absender eintragen und durch Kommas trennen.
+ABSENDER=
+BETREFF=Wirtschaftsplan
+# Adresse für Rückfragen zur Freigabe eintragen.
+KONTAKT=
+MAX_ANHANG_MB=10

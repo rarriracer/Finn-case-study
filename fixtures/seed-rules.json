@@ -1,0 +1,13 @@
+[
+  {"id":"sparkasse","bank":"Sparkasse Musterstadt","file":"Vertrag_1_Sparkasse_Investitionsdarlehen.pdf","rules":[]},
+  {"id":"foerderbank","bank":"Förderbank Musterland","file":"Vertrag_2_Foerderbank_Foerderdarlehen.pdf","rules":[
+    {"id":"economic_equity","name":"Wirtschaftliche Eigenkapitalquote","operator":">=","threshold":"27.5","decimals":null,"unit":"%","formula":"(Eigenkapital − ausstehende eingeforderte Einlagen + 50 % der Sonderposten) / Bilanzsumme × 100","sources":[[6,"§ 13 Abs. 1","Wirtschaftliche Eigenkapitalquote von mindestens 27,5 %"],[1,"§ 1","abzüglich eingeforderter, aber noch nicht eingezahlter Einlagen"],[2,"§ 1","Eigenkapital zuzüglich 50 %"]]}
+  ]},
+  {"id":"landesbank","bank":"Landesbank Mittelland","file":"Vertrag_3_Landesbank_Investitionsdarlehen.pdf","rules":[
+    {"id":"dscr","name":"Schuldendienstdeckungsgrad (DSCR)","operator":">=","threshold":"1.30","decimals":2,"unit":"×","formula":"(Vertrags-EBITDA − Ertragsteuern) / (Darlehenszinsen + planmäßige Tilgung)","sources":[[5,"§ 13 Abs. 1","Schuldendienstdeckungsgrad von mindestens 1,30"],[13,"Anlage 3 Abs. 2","zuzüglich der Zinsen und ähnlichen Aufwendungen"],[13,"Anlage 3 Abs. 3–6","unabhängig davon, ob für diese Darlehen ein Rangrücktritt vereinbart ist"],[13,"Anlage 3 Abs. 4","Nicht einzubeziehen sind freiwillige Sondertilgungen"],[13,"Anlage 3 Abs. 6","auf zwei Nachkommastellen kaufmännisch zu runden"]]}
+  ]},
+  {"id":"konsortium","bank":"Konsortialkredit","file":"Vertrag_4_Konsortialkredit.pdf","rules":[
+    {"id":"equity","name":"Bilanzielle Eigenkapitalquote","operator":">=","threshold":"30.0","decimals":1,"unit":"%","formula":"Bilanzielles Eigenkapital / Bilanzsumme × 100","sources":[[6,"§ 14 Abs. 1 a","nicht weniger als 30,0 %"],[2,"§ 1","Sonderposten (insbesondere für Investitions- und Baukostenzuschüsse), Rückstellungen und Gesellschafterdarlehen"],[7,"§ 14 Abs. 2","Eigenkapitalquote wird auf eine Nachkommastelle"]]},
+    {"id":"leverage","name":"Dynamischer Verschuldungsgrad","operator":"<=","threshold":"3.50","decimals":2,"unit":"×","formula":"(Finanzschulden ohne nachrangiges Gesellschafterdarlehen − frei verfügbare liquide Mittel) / Vertrags-EBITDA","sources":[[7,"§ 14 Abs. 1 b","nicht mehr als 3,50"],[2,"§ 1","mit Ausnahme von Nachrangigen Gesellschafterdarlehen"],[2,"§ 1","soweit diese frei verfügbar"],[3,"§ 1","Finanzverbindlichkeiten abzüglich der Liquiden Mittel"],[2,"§ 1","Erträge aus der Auflösung von Sonderposten werden nicht bereinigt"],[7,"§ 14 Abs. 2","Dynamische Verschuldungsgrad auf zwei Nachkommastellen kaufmännisch gerundet"]]}
+  ]}
+]
