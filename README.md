@@ -177,6 +177,8 @@ Unterstützte Planjahre sind 2026 und 2027. Nennt der Mailbetreff ein Jahr, muss
 
 Finn findet Jahresüberschriften und Positionsbezeichnungen auch nach Verschiebungen. Einige gängige Alternativnamen und einzelne Tippfehler in längeren Wörtern werden erkannt. Bei mehreren plausiblen Treffern stoppt der Import. Die Darlehensbereiche müssen für den Summenabgleich weiterhin erkennbar gegliedert sein. Der KI-Abgleich dokumentiert fachliche Hinweise im Prüfbericht. Belegte KI-Zuordnungszweifel setzen die betroffenen Kennzahlen auf „nicht prüfbar“. Python prüft zusätzlich vorhandene GuV-Ergebnisüberleitungen. Gesonderte EBITDA-Bereinigungen und nicht eindeutig belegte Finanzschuldstrukturen führen zur fachlichen Klärung, bevor abhängige Kennzahlen bewertet werden.
 
+Die Regressionstests prüfen auch harmlose Gegenbeispiele wie „Keine EBITDA-Bereinigungen“, „Kein Factoring“ und umformulierte Angaben zur frei verfügbaren Liquidität. Bei widersprüchlichen Beträgen oder unvollständigen Angaben bleiben die betroffenen Kennzahlen offen.
+
 Der Sammelbefehl erzeugt die 30 synthetischen Excel-Kopien in einem temporären Ordner und gibt die Ergebnisse im Terminal aus. Der Excel-Test prüft unter anderem Jahresauswahl, Einheiten, verschobene Tabellen, Tippfehler, Grenzverletzungen, widersprüchliche Daten und mehrere simulierte Mailaufträge. Der Vertragstest liest alle vier Original-PDFs und simuliert die KI-Antworten. Die Versandtests simulieren Graph und SMTP, auch nach einem Neustart. Die Tests laufen ohne lokale Mail-Freigabeliste, Mailversand und API-Key.
 
 

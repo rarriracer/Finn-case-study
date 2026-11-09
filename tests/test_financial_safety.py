@@ -93,3 +93,66 @@ class FinancialSafetyTests(unittest.TestCase):
     def test_non_subordinated_shareholder_loan(self):
         non_subordinated_shareholder_loan()
 
+    def assert_check(self, content, expected):
+        plan = import_plan(content, 'Plan-Textpruefung.xlsx')
+        with TemporaryDirectory() as directory:
+            _, rows, _, _ = finn.check_plan(plan, Path(directory), content)
+        actual = {row['rule']['id']: (row['status'], row['value']) for row in rows if row['rule']}
+        for metric, result in expected.items():
+            with self.subTest(metric=metric):
+                self.assertEqual(actual[metric], result)
+
+    def test_no_ebitda_adjustment_keeps_dscr_and_leverage_calculable(self):
+        for changes in (
+            {'A22': 'Hinweis: Keine EBITDA-Bereinigungen.'},
+            {'A22': 'Keine außerordentlichen Bereinigungen.'},
+            {'A22': 'Außerordentliche EBITDA-Bereinigungen', 'D22': 0},
+        ):
+            with self.subTest(changes=changes):
+                self.assert_check(modified_workbook(2, changes), {
+                    'dscr': ('Eingehalten', '1.56'), 'leverage': ('Eingehalten', '3.37'),
+                })
+
+    def test_nonzero_ebitda_adjustment_overrides_no_adjustment_note(self):
+        content = modified_workbook(2, {'A22': 'Keine EBITDA-Bereinigungen.', 'D22': -5000})
+        self.assert_check(content, {'dscr': ('Nicht prüfbar', None), 'leverage': ('Nicht prüfbar', None)})
+
+    def test_no_other_financing_keeps_leverage_calculable(self):
+        content = modified_workbook(3, {'A41': 'Kein Factoring.', 'A42': 'Keine Schuldscheindarlehen.'})
+        self.assert_check(content, {'leverage': ('Eingehalten', '3.37')})
+
+    def test_other_financing_amount_overrides_absence_note(self):
+        for changes in (
+            {'A41': 'Factoringverbindlichkeiten', 'D41': 1000},
+            {'A41': 'Kein Factoring.', 'D41': 1000},
+        ):
+            with self.subTest(changes=changes):
+                self.assert_check(modified_workbook(3, changes), {'leverage': ('Nicht prüfbar', None)})
+
+    def test_unsecured_subordinated_loan_keeps_leverage_calculable(self):
+        content = modified_workbook(4, {
+            'A13': 'Gesellschafterdarlehen Stadt Musterstadt (qualifizierter Rangrücktritt, ohne Sicherheiten)',
+        })
+        self.assert_check(content, {'leverage': ('Eingehalten', '3.37')})
+
+    def test_unsecured_loan_still_requires_qualified_subordination(self):
+        content = modified_workbook(4, {
+            'A13': 'Gesellschafterdarlehen Stadt Musterstadt (kein qualifizierter Rangrücktritt, ohne Sicherheiten)',
+        })
+        self.assert_check(content, {'leverage': ('Nicht prüfbar', None)})
+
+    def test_clear_liquidity_note_accepts_harmless_rewording(self):
+        for note in (
+            '3) Liquide Mittel: frei verfügbar; keine Verpfändung; keine Cash-Pooling-Verbindlichkeiten',
+            'Liquide Mittel sind frei verfügbar und nicht verpfändet. Es bestehen keine Cash-Pooling-Verbindlichkeiten.',
+        ):
+            with self.subTest(note=note):
+                self.assert_check(modified_workbook(3, {'A40': note}), {'leverage': ('Eingehalten', '3.37')})
+
+    def test_ambiguous_or_contradictory_liquidity_stays_uncheckable(self):
+        for changes in (
+            {'A40': 'Liquide Mittel sind frei verfügbar und nicht verpfändet.'},
+            {'A41': 'Liquide Mittel sind teilweise verpfändet.'},
+        ):
+            with self.subTest(changes=changes):
+                self.assert_check(modified_workbook(3, changes), {'leverage': ('Nicht prüfbar', None)})

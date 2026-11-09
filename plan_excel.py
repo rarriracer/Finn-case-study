@@ -53,6 +53,18 @@ ALIASES = {
 YEAR_TOKEN = re.compile(r"(?<!\d)(20\d{2})(?!\d)")
 PLAN_TOKEN = re.compile(r"\bplan(?:werte?|jahr|ung)?\b")
 NON_PLAN = re.compile(r"\b(?:ist|hr|hochrechnung|forecast|vorjahr)\b")
+ADJUSTMENT_MENTION = re.compile(r"au(?:ß|ss)erordentlich|ebitda.?bereinigung")
+ADJUSTMENT_LABEL = re.compile(r"(?:au(?:ß|ss)erordentliche )?ebitda[ -]?bereinigung(?:en)?")
+NO_ADJUSTMENT = re.compile(r"(?:hinweis: )?keine (?:au(?:ß|ss)erordentlichen? (?:ebitda[ -]?)?|ebitda[ -]?)bereinigung(?:en)?\.?")
+OTHER_FINANCING = re.compile(r"finanzierungsleasing|schuldschein|anleihe|factoring")
+NO_OTHER_FINANCING = re.compile(r"(?:hinweis: )?kein(?:e)? (?:finanzierungsleasing|schuldschein(?:e|darlehen)?|anleihen?|factoring)\.?")
+FINANCING_ISSUE = "Die Finanzschulden sind nicht eindeutig auf Bankschulden und nachweislich nachrangige Gesellschafterdarlehen begrenzt. Zusammensetzung und Rangrücktritt bitte fachlich prüfen."
+CASH_NOTE = re.compile(r"\bliquide mittel(?:\s*:| sind\b)")
+FREE_CASH = re.compile(
+    r"(?:\d+\) )?liquide mittel(?::\s*| sind )frei verfügbar"
+    r"(?:[,;] | und )(?:keine verpfändung|nicht verpfändet)"
+    r"(?:[,;.] | und )(?:es bestehen )?keine cash[ -]pooling[ -]verbindlichkeiten\.?"
+)
 
 
 class PlanImportError(ValueError):
@@ -278,9 +290,17 @@ def validate_guv(rows, labels, column, unit, sheet, inputs, issues):
                 raise PlanImportError(f"Die GuV-Überleitung für „{total}“ stimmt nicht mit den Einzelwerten überein.")
         except PlanImportError as error:
             issues["net_income"] = str(error)
-    text = " ".join(label(cell) for row in rows for cell in row if isinstance(cell, str))
-    if re.search(r"au(?:ß|ss)erordentlich|ebitda.?bereinigung", text):
+    for row in rows:
+        text = " ".join(label(cell) for cell in row if isinstance(cell, str) and cell.strip())
+        if not ADJUSTMENT_MENTION.search(text):
+            continue
+        value = row[column - 1]
+        if NO_ADJUSTMENT.fullmatch(text) and (value in (None, 0) or label(value) == text):
+            continue
+        if type(value) in (int, float) and value == 0 and ADJUSTMENT_LABEL.fullmatch(text):
+            continue
         issues["extraordinary_adjustment"] = "Gesonderte EBITDA-Bereinigungen sind ausgewiesen. Bitte deren Betrag und vertragliche Anwendbarkeit fachlich klären."
+        break
 
 
 def validate_financing_scope(sheets, rows, labels, column, issues):
@@ -289,15 +309,17 @@ def validate_financing_scope(sheets, rows, labels, column, issues):
     other_loans = [label(labels[i]) for i in range(subtotal, end - 1)
                    if labels[i] and label(labels[i]) != "sonstige darlehen"
                    and rows[i][column - 1] != 0]
-    balance_text = " ".join(label(cell) for row in sheets["Bilanz"] for cell in row if isinstance(cell, str))
-    qualified = lambda text: ("gesellschafter" in text and "qualifiziert" in text and "rangrücktritt" in text
-                              and not re.search(r"nicht|ohne|kein", text))
+    def qualified(text):
+        # A separate note on collateral does not negate a qualified subordination.
+        text = re.sub(r"[,;] ohne sicherheiten(?=\s*[,;.)]|$)", "", text)
+        return ("gesellschafter" in text and "qualifiziert" in text and "rangrücktritt" in text
+                and not re.search(r"nicht|ohne|kein", text))
+
     notes = [label(cell) for row in sheets["Bilanz"] for cell in row
              if isinstance(cell, str) and "gesellschafter" in label(cell)]
     if (any(not qualified(text) for text in other_loans)
-        or (other_loans and (not notes or any(not qualified(text) for text in notes)))
-        or re.search(r"finanzierungsleasing|schuldschein|anleihe|factoring", balance_text)):
-        issues["bank_debt"] = "Die Finanzschulden sind nicht eindeutig auf Bankschulden und nachweislich nachrangige Gesellschafterdarlehen begrenzt. Zusammensetzung und Rangrücktritt bitte fachlich prüfen."
+        or (other_loans and (not notes or any(not qualified(text) for text in notes)))):
+        issues["bank_debt"] = FINANCING_ISSUE
 
 
 def validate_balance(rows, row_labels, column, unit, sheet, inputs, issues):
@@ -313,10 +335,18 @@ def validate_balance(rows, row_labels, column, unit, sheet, inputs, issues):
     if not same_total(inputs["assets"][0], [liabilities]):
         issues["assets"] = "Aktiva und Passiva stimmen nicht überein."
 
-    notes = [label(value) for value in row_labels if "liquide mittel:" in label(value)]
-    expected = "liquide mittel: frei verfügbar, keine verpfändung, keine cash-pooling-verbindlichkeiten."
-    if len(notes) != 1 or not re.fullmatch(r"(?:3\) )?" + re.escape(expected), notes[0]):
+    notes = [label(value) for value in row_labels if CASH_NOTE.search(label(value))]
+    if len(notes) != 1 or not FREE_CASH.fullmatch(notes[0]):
         issues["cash"] = "Die frei verfügbare Liquidität ist in dieser Vorlage nicht eindeutig ausgewiesen."
+
+    for row in rows:
+        value = row[column - 1]
+        text = " ".join(label(cell) for cell in row if isinstance(cell, str) and cell.strip())
+        if OTHER_FINANCING.search(text) and not (
+            NO_OTHER_FINANCING.fullmatch(text) and (value in (None, 0) or label(value) == text)
+        ):
+            issues["bank_debt"] = FINANCING_ISSUE
+            break
 
     capital_label = "Eingeforderte, aber noch nicht eingezahlte Einlagen"
     capital_rows = positions(row_labels, capital_label, typos=True)
