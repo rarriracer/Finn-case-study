@@ -1,5 +1,7 @@
 # Finn · Covenant-Prüfung per E-Mail
 
+[![Finn-Tests](https://github.com/rarriracer/Finn-case-study/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/rarriracer/Finn-case-study/actions/workflows/tests.yml)
+
 Finn prüft den Wirtschaftsplan der fiktiven Stadtwerke Musterstadt gegen vier Kreditverträge. Auf eine Auftragsmail antwortet er im selben Verlauf mit Planwerten, Vertragsgrenzen und dem jeweiligen Puffer. Der angehängte PDF-Prüfbericht enthält Rechenwege, Vertragszitate und Excel-Fundstellen.
 
 Python berechnet Kennzahlen, Rundung und Grenzabstände. Die KI liest Vertragsklauseln und kann die Zuordnung der Excel-Felder prüfen. Finn übernimmt geprüfte Vertragsregeln in DuckDB und verwendet sie bei späteren Planprüfungen erneut.
@@ -162,6 +164,8 @@ Ohne `--testbestand` verwendet Finn den geprüften Referenzbestand. Der IMAP-Abr
 Mit `--graph` liest Finn weiter per IMAP und meldet sich für den Versand separat mit **Mail.Send** an. Bei beiden Microsoft-Anmeldungen das gleiche Finn-Konto auswählen. Der Versandstatus HTTP 202 bedeutet, dass Graph die Nachricht angenommen hat. Die Zustellung lässt sich am Zielpostfach prüfen. Ohne `--graph` verwendet Finn SMTP. Beide Wege nutzen denselben Abrufstand und dieselbe lokale Versandwarteschlange.
 
 ## Robustheit und Regressionstests
+
+Die [GitHub-Testläufe](https://github.com/rarriracer/Finn-case-study/actions/workflows/tests.yml) starten bei jedem Push und Pull Request. Die Übersicht eines Laufs zeigt jeden Regressionstest mit Status und alle 30 Excel-Fälle mit Ergebnis. Erwartete Ablehnungen zählen als bestandene Fälle. Mailversand und KI-Antworten werden in den automatisierten Tests simuliert.
 
 Unterstützte Planjahre sind 2026 und 2027. Nennt der Mailbetreff ein Jahr, muss das Excel genau diesem Planjahr entsprechen. Ohne Jahr im Betreff wird ein eindeutiges gemeinsames Planjahr in GuV und Bilanz verwendet. Der Darlehensspiegel muss Zinsen, Tilgung und Endbestand für dasselbe Jahr ausweisen. Eine Hochrechnung zählt nicht als Plan. Finn prüft Planwerte gegen die geprüften Vertragsgrenzen und führt keinen Plan-Ist-Vergleich aus.
 
