@@ -167,17 +167,17 @@ Mit `--graph` liest Finn weiter per IMAP und meldet sich für den Versand separa
 
 Die [GitHub-Testläufe](https://github.com/rarriracer/Finn-case-study/actions/workflows/tests.yml) starten bei jedem Push und Pull Request. Die Übersicht eines Laufs zeigt jeden Regressionstest mit Status und alle 30 Excel-Fälle mit Ergebnis. Erwartete Ablehnungen zählen als bestandene Fälle. Mailversand und KI-Antworten werden in den automatisierten Tests simuliert.
 
+Nach dem Schnellstart die Mail-Testabhängigkeiten einmalig mit `python -m pip install -r requirements-mail.txt` installieren. Anschließend führt derselbe Befehl wie in GitHub Actions beide Testsuiten aus und liefert bei Fehlern Exit-Code `1`.
+
+```sh
+python check.py
+```
+
 Unterstützte Planjahre sind 2026 und 2027. Nennt der Mailbetreff ein Jahr, muss das Excel genau diesem Planjahr entsprechen. Ohne Jahr im Betreff wird ein eindeutiges gemeinsames Planjahr in GuV und Bilanz verwendet. Der Darlehensspiegel muss Zinsen, Tilgung und Endbestand für dasselbe Jahr ausweisen. Eine Hochrechnung zählt nicht als Plan. Finn prüft Planwerte gegen die geprüften Vertragsgrenzen und führt keinen Plan-Ist-Vergleich aus.
 
 Finn findet Jahresüberschriften und Positionsbezeichnungen auch nach Verschiebungen. Einige gängige Alternativnamen und einzelne Tippfehler in längeren Wörtern werden erkannt. Bei mehreren plausiblen Treffern stoppt der Import. Die Darlehensbereiche müssen für den Summenabgleich weiterhin erkennbar gegliedert sein. Der KI-Abgleich dokumentiert fachliche Hinweise im Prüfbericht. Belegte KI-Zuordnungszweifel setzen die betroffenen Kennzahlen auf „nicht prüfbar“. Python prüft zusätzlich vorhandene GuV-Ergebnisüberleitungen. Gesonderte EBITDA-Bereinigungen und nicht eindeutig belegte Finanzschuldstrukturen führen zur fachlichen Klärung, bevor abhängige Kennzahlen bewertet werden.
 
-```sh
-.venv/bin/python -m pip install -r requirements-mail.txt
-.venv/bin/python -m unittest discover -s tests -p 'test_*.py'
-PYTHONPATH=. .venv/bin/python tests/stress_import.py beispiele/Wirtschaftsplan_2027.xlsx
-```
-
-Der Excel-Test erzeugt 30 synthetische Kopien und eine Ergebnistabelle unter `output/excel-robustheit/`. Er prüft unter anderem Jahresauswahl, Einheiten, verschobene Tabellen, Tippfehler, Grenzverletzungen, widersprüchliche Daten und mehrere simulierte Mailaufträge. Der Vertragstest liest alle vier Original-PDFs und simuliert die KI-Antworten. Die Versandtests simulieren Graph und SMTP, auch nach einem Neustart. Die Tests laufen ohne lokale Mail-Freigabeliste, Mailversand und API-Key.
+Der Sammelbefehl erzeugt die 30 synthetischen Excel-Kopien in einem temporären Ordner und gibt die Ergebnisse im Terminal aus. Der Excel-Test prüft unter anderem Jahresauswahl, Einheiten, verschobene Tabellen, Tippfehler, Grenzverletzungen, widersprüchliche Daten und mehrere simulierte Mailaufträge. Der Vertragstest liest alle vier Original-PDFs und simuliert die KI-Antworten. Die Versandtests simulieren Graph und SMTP, auch nach einem Neustart. Die Tests laufen ohne lokale Mail-Freigabeliste, Mailversand und API-Key.
 
 
 Die Vertragstests enthalten zusätzlich synthetische Klauseln und absichtlich falsche KI-Vorschläge, etwa eine vertauschte Eigen- und Fremdkapitalquote bei identischer Zahl, falsche Einheiten, fehlende zweite Grenzen und unbekannte Kennzahlen. Finn verlangt einen Beleg für Kennzahl, Richtung, Grenzwert und Einheit. Für die im Mustervertrag belegte Fremdkapitalquote schlägt Finn die hinterlegte Formel samt Bilanzfeldern vor und aktiviert sie erst nach Bestätigung. Andere neue Kennzahlen bleiben Entwürfe, bis eine fachlich geprüfte Formel samt Excel-Zuordnung hinterlegt ist. Die Zahlen und Texte in `output/` sind lokale Testergebnisse und werden von Git ignoriert.

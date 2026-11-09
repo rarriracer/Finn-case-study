@@ -8,10 +8,6 @@ on:
 permissions:
   contents: read
 
-defaults:
-  run:
-    shell: bash
-
 jobs:
   tests:
     name: Regressionstests und Excel-Stresstest
@@ -25,50 +21,6 @@ jobs:
         with:
           python-version: '3.12'
       - name: Testabhängigkeiten installieren
-        id: dependencies
         run: python -m pip install -r requirements.txt -r requirements-mail.txt
-      - name: Regressionstests einzeln ausweisen
-        run: |
-          report="$RUNNER_TEMP/unittest-results.txt"
-          status=0
-          python - "$report" <<'PY' || status=$?
-          import sys
-          import unittest
-
-          suite = unittest.defaultTestLoader.discover('tests')
-          with open(sys.argv[1], 'w', encoding='utf-8') as report:
-              result = unittest.TextTestRunner(stream=report, verbosity=2).run(suite)
-          if result.testsRun == 0:
-              sys.exit('Keine Regressionstests gefunden.')
-          sys.exit(0 if result.wasSuccessful() else 1)
-          PY
-          {
-            printf '## Regressionstests\n\n'
-            if [[ -s "$report" ]]; then
-              printf '```text\n'
-              cat "$report"
-              printf '```\n'
-            else
-              printf 'Der Testlauf konnte keinen Bericht erzeugen. Details stehen im Schrittprotokoll.\n'
-            fi
-          } | tee -a "$GITHUB_STEP_SUMMARY"
-          exit "$status"
-      - name: Excel-Stresstest mit Fallübersicht
-        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
-        run: |
-          report_dir="$RUNNER_TEMP/excel-robustheit"
-          log="$RUNNER_TEMP/excel-test.log"
-          status=0
-          PYTHONPATH=. python tests/stress_import.py beispiele/Wirtschaftsplan_2027.xlsx \
-            --output "$report_dir" 2>&1 | tee "$log" || status=$?
-          if [[ "$status" == 0 ]]; then
-            sed -E 's/\[([^]]+)\]\([^)]*\)/`\1`/g' "$report_dir/Ergebnisse.md" >> "$GITHUB_STEP_SUMMARY"
-          else
-            {
-              printf '## Excel-Stresstest fehlgeschlagen\n\n'
-              printf 'Die Ausgabe zeigt die abgeschlossenen Fälle und den Fehler.\n\n```text\n'
-              cat "$log"
-              printf '```\n'
-            } >> "$GITHUB_STEP_SUMMARY"
-          fi
-          exit "$status"
+      - name: Alle Prüfungen ausführen
+        run: python check.py
